@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kozmik Savunucu</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            background-color: #000011;
+            color: #ffffff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 480px;
+            height: 640px;
+            border: 2px solid #ffffff;
+            overflow: hidden;
+        }
+
+        #gameCanvas {
+            background-color: #000011;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #ui {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-size: 16px;
+        }
+
+        #pauseScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            color: #ffffff;
+            cursor: pointer;
+        }
+
+        #gameOverScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-size: 24px;
+        }
+
+        #gameOverScreen button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #settingsButton {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: transparent;
+            color: #ffffff;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+        }
+
+        #settingsMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            font-size: 20px;
+        }
+
+        #settingsMenu button {
+            margin: 10px;
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #555;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #soundToggle {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <canvas id="gameCanvas"></canvas>
+        <div id="ui">
+            Skor: <span id="score">0</span><br>
+            Can: <span id="lives">3</span><br>
+            Seviye: <span id="level">1</span>
+        </div>
+        <div id="pauseScreen">
+            Oyun Duraklatıldı - Devam Etmek İçin Tıkla
+        </div>
+        <div id="gameOverScreen">
+            Oyun Bitti!<br>
+            Skorunuz: <span id="finalScore">0</span><br>
+            Yüksek Skor: <span id="highScoreDisplay">0</span>
+            <button onclick="window.kozmikSavunucu.restartGame()">Yeniden Başlat</button>
+        </div>
+        <button id="settingsButton">⚙️</button>
+        <div id="settingsMenu">
+            <h2>Ayarlar</h2>
+            <button id="themeToggle">Temayı Değiştir</button>
+            <label id="soundToggle">
+                Sesi Açık
+                <input type="checkbox" id="soundEnabled">
+            </label>
+            <button id="closeSettings">Kapat</button>
+        </div>
+    </div>
+<script>
+    class KozmikSavunucu {
+        constructor() {
+            this.canvas = document.getElementById('gameCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.canvas.width = 480;
+            this.canvas.height = 640;
+
+            this.score = 0;
+            this.level = 1;
+            this.lives = 3;
+            this.highScore = this.loadHighScore();
+
+            this.player = {
+                x: this.canvas.width / 2 - 20,
+                y: this.canvas.height - 60,
+                width: 40,
+                height: 40,
+                speed: 5,
+                color: '#00ff00'
+            };
+
+            this.bullets = [];
+            this.enemies = [];
+            this.particles = [];
+            this.keys = {};
+            this.lastShot = Date.now();
+            this.animationId = null;
+            this.gameState = 'playing'; // 'playing', 'paused', 'gameOver'
+
+            // UI öğeleri
+            this.scoreDisplay = document.getElementById('score');
+            this.livesDisplay = document.getElementById('lives');
+            this.levelDisplay = document.getElementById('level');
+            this.pauseScreen = document.getElementById('pauseScreen');
+            this.gameOverScreen = document.getElementById('gameOverScreen');
+            this.finalScoreDisplay = document.getElementById('finalScore');
+            this.highScoreDisplay = document.getElementById('highScoreDisplay');
+	    this.settingsMenu = document.getElementById('settingsMenu');
+            this.settingsButton = document.getElementById('settingsButton');
+            this.themeToggle = document.getElementById('themeToggle');
+            this.soundToggle = document.getElementById('soundToggle');
+            this.soundEnabledCheckbox = document.getElementById('soundEnabled');
+            this.closeSettingsButton = document.getElementById('closeSettings');
+
+            // Tema ayarları
+            this.theme = localStorage.getItem('kozmikSavuncuTema') || 'dark';
+            this.setTheme(this.theme);
+
+            // Ses ayarları
+            this.soundEnabled = localStorage.getItem('kozmikSavuncuSes') === 'true' || false;
+            this.soundEnabledCheckbox.checked = this.soundEnabled;
+
+            // Olay dinleyicileri
+            document.addEventListener('keydown', this.handleKeyDown.bind(this));
+            document.addEventListener('keyup', this.handleKeyUp.bind(this));
+            this.pauseScreen.addEventListener('click', this.togglePause.bind(this));
+            this.settingsButton.addEventListener('click', this.openSettings.bind(this));
+            this.themeToggle.addEventListener('click', this.toggleTheme.bind(this));
+            this.soundEnabledCheckbox.addEventListener('change', this.toggleSound.bind(this));
+            this.closeSettingsButton.addEventListener('click', this.closeSettings.bind(this));
+
+            // Oyun döngüsünü başlat
+            this.spawnEnemyWave();
+            this.gameLoop();
+            this.updateUI();
+        }
+
+        /**
+         * Olay İşleyicileri
+         */
+        handleKeyDown(event) {
+            this.keys[event.code] = true;
+        }
+
+        handleKeyUp(event) {
+            this.keys[event.code] = false;
+        }
+
+        /**
+         * Oyun Duraklatma ve Devam Ettirme
+         */
+        togglePause() {
+            if (this.gameState === 'playing') {
+                this.gameState = 'paused';
+                this.pauseScreen.style.display = 'flex';
+                cancelAnimationFrame(this.animationId);
+                this.animationId = null;
+            } else if (this.gameState === 'paused') {
+                this.gameState = 'playing';
+                this.pauseScreen.style.display = 'none';
+                this.gameLoop();
+            }
+        }
+
+	/**
+         * Ayarlar Menüsü
+         */
+        openSettings() {
+            this.cancelAnimationFrame();
+            this.gameState = 'paused';
+            this.settingsMenu.style.display = 'flex';
+        }
+
+        closeSettings() {
+            this.settingsMenu.style.display = 'none';
+            if (this.gameState === 'paused') {
+                this.gameState = 'playing';
+                this.gameLoop();
+            }
+        }
+
+        toggleTheme() {
+            this.theme = this.theme === 'dark' ? 'light' : 'dark';
+            this.setTheme(this.theme);
+            localStorage.setItem('kozmikSavuncuTema', this.theme);
+        }
+
+        setTheme(theme) {
+            document.body.style.backgroundColor = theme === 'dark' ? '#000011' : '#f0f8ff';
+            document.body.style.color = theme === 'dark' ? '#ffffff' : '#000000';
+            this.player.color = theme === 'dark' ? '#00ff00' : '#006400';
+        }
+
+        toggleSound() {
+            this.soundEnabled = this.soundEnabledCheckbox.checked;
+            localStorage.setItem('kozmikSavuncuSes', this.soundEnabled);
+        }
+
+        /**
+         * Oyun Bitti
+         */
+        endGame() {
+            this.gameState = 'gameOver';
+            this.finalScoreDisplay.innerText = this.score;
+            this.highScoreDisplay.innerText = this.highScore;
+            this.gameOverScreen.style.display = 'flex';
+            this.cancelAnimationFrame();
+            this.animationId = null;
+        }
+
+        /**
+         * Oyunu Yeniden Başlat
+         */
+        restartGame() {
+            this.gameOverScreen.style.display = 'none';
+            this.score = 0;
+            this.level = 1;
+            this.lives = 3;
+            this.player.x = this.canvas.width / 2 - 20;
+            this.bullets = [];
+            this.enemies = [];
+            this.particles = [];
+            this.gameState = 'playing';
+            this.spawnEnemyWave();
+            this.updateUI();
+            this.gameLoop();
+        }
+
+        /**
+         * UI Güncelleme
+         */
+        updateUI() {
+            this.scoreDisplay.innerText = this.score;
+            this.livesDisplay.innerText = this.lives;
+            this.levelDisplay.innerText = this.level;
+        }
+
+        /**
+         * Düşman Oluşturma
+         */
+        spawnEnemyWave() {
+            this.enemies = [];
+            const enemyCount = 5 * this.level;
+            for (let i = 0; i < enemyCount; i++) {
+                const x = (i % 5) * 80 + 20;
+                const y = Math.floor(i / 5) * 50 + 50;
+                this.enemies.push({
+                    x: x,
+                    y: y,
+                    width: 30,
+                    height: 30,
+                    speed: 2,
+                    color: '#ff0000',
+                    points: 100,
+                    active: true
+                });
+            }
+        }
+
+        /**
+         * Patlama Efekti
+         * @param {number} x
+         * @param {number} y
+         * @param {string} color
+         */
+        createExplosion(x, y, color) {
+            for (let i = 0; i < 8; i++) {
+                this.particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 10,
+                    vy: (Math.random() - 0.5) * 10,
+                    life: 30,
+                    maxLife: 30,
+                    color: color
+                });
+            }
+        }
+
+        checkCollision(obj1, obj2) {
+            return obj1.x < obj2.x + obj2.width &&
+                obj1.x + obj1.width > obj2.x &&
+                obj1.y < obj2.y + obj2.height &&
+                obj1.y + obj1.height > obj2.y;
+        }
+
+        /**
+         * Oyun Döngüsü
+         */
+        gameLoop() {
+            if (this.gameState !== 'playing') return;
+
+            this.update();
+            this.render();
+
+            this.animationId = requestAnimationFrame(() => this.gameLoop());
+        }
+
+        update() {
+            const currentTime = Date.now();
+
+            // Oyuncu girişini işle
+            if (this.keys['ArrowLeft'] && this.player.x > 0) {
+                this.player.x -= this.player.speed;
+            }
+            if (this.keys['ArrowRight'] && this.player.x < this.canvas.width - this.player.width) {
+                this.player.x += this.player.speed;
+            }
+            if (this.keys['Space'] && currentTime - this.lastShot > 200) {
+                this.bullets.push({
+                    x: this.player.x + this.player.width / 2 - 2,
+                    y: this.player.y,
+                    width: 4,
+                    height: 10,
+                    speed: 8,
+                    color: this.theme === 'dark' ? '#00ffff' : '#0066cc',
+                    active: true
+                });
+                this.lastShot = currentTime;
+                this.playSound(800, 0.1, 'square');
+            }
+
+            // Mermileri güncelle
+            this.bullets = this.bullets.filter(bullet => {
+                bullet.y -= bullet.speed;
+                return bullet.y > -bullet.height && bullet.active;
+            });
+
+            // Düşmanları güncelle
+            this.updateEnemies();
+
+            // Parçacıkları güncelle
+            this.particles = this.particles.filter(particle => {
+                particle.x += particle.vx;
+                particle.y += particle.vy;
+                particle.life--;
+                return particle.life > 0;
+            });
+
+            // Çarpışmaları kontrol et
+            this.checkCollisions();
+
+            // Seviye tamamlanma kontrolü
+            const activeEnemies = this.enemies.filter(enemy => enemy.active);
+            if (activeEnemies.length === 0) {
+                this.level++;
+                const bonusPoints = this.level * 100;
+                this.score += bonusPoints;
+                this.playSound(1000, 0.5, 'sine');
+                this.spawnEnemyWave();
+                this.updateUI();
+            }
+
+            // Oyun bitti kontrolü
+            if (this.lives <= 0) {
+                this.endGame();
+            }
+        }
+
+        updateEnemies() {
+            let moveDown = false;
+            const activeEnemies = this.enemies.filter(enemy => enemy.active);
+
+            if (activeEnemies.length > 0) {
+                const leftMost = Math.min(...activeEnemies.map(e => e.x));
+                const rightMost = Math.max(...activeEnemies.map(e => e.x + e.width));
+
+                if (leftMost <= 0 || rightMost >= this.canvas.width) {
+                    moveDown = true;
+                }
+            }
+
+            this.enemies.forEach(enemy => {
+                if (!enemy.active) return;
+
+                if (moveDown) {
+                    enemy.y += 20;
+                    enemy.speed *= -1;
+                } else {
+                    enemy.x += enemy.speed;
+                }
+
+                // Düşmanın alta ulaşıp ulaşmadığını kontrol et
+                if (enemy.y + enemy.height >= this.player.y) {
+                    enemy.active = false;
+                    this.lives--;
+                    this.playSound(200, 0.5, 'triangle');
+                    this.createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color);
+                    this.updateUI();
+                }
+            });
+        }
+
+        checkCollisions() {
+            // Mermi-düşman çarpışmaları
+            this.bullets.forEach(bullet => {
+                this.enemies.forEach(enemy => {
+                    if (bullet.active && enemy.active && this.checkCollision(bullet, enemy)) {
+                        bullet.active = false;
+                        enemy.active = false;
+                        this.score += enemy.points;
+                        this.playSound(600, 0.2, 'sine');
+                        this.createExplosion(enemy.x + enemy.width / 2, enemy.y + enemy.height / 2, enemy.color);
+                        this.updateUI();
+                    }
+                });
+            });
+        }
+
+        render() {
+            // Canvas'ı temizle
+            this.ctx.fillStyle = this.theme === 'dark' ? '#000011' : '#f0f8ff';
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+            // Yıldız arka planını çiz
+            this.drawStars();
+
+            // Oyuncuyu çiz
+            this.drawPlayer();
+
+            // Mermileri çiz
+            this.bullets.forEach(bullet => {
+                if (bullet.active) {
+                    this.ctx.fillStyle = bullet.color;
+                    this.ctx.fillRect(bullet.x, bullet.y, bullet.width, bullet.height);
+                }
+            });
+
+            // Düşmanları çiz
+            this.enemies.forEach(enemy => {
+                if (enemy.active) {
+                    this.ctx.fillStyle = enemy.color;
+                    this.ctx.fillRect(enemy.x, enemy.y, enemy.width, enemy.height);
+
+                    // Düşman detaylarını çiz
+                    this.ctx.fillStyle = this.theme === 'dark' ? '#ffffff' : '#000000';
+                    this.ctx.fillRect(enemy.x + 2, enemy.y + 2, enemy.width - 4, 2);
+                }
+            });
+
+            // Parçacıkları çiz
+            this.particles.forEach(particle => {
+                const alpha = particle.life / particle.maxLife;
+                this.ctx.fillStyle = particle.color + Math.floor(alpha * 255).toString(16).padStart(2, '0');
+                this.ctx.fillRect(particle.x, particle.y, 2, 2);
+            });
+        }
+
+        drawStars() {
+            this.ctx.fillStyle = this.theme === 'dark' ? '#ffffff' : '#cccccc';
+            for (let i = 0; i < 100; i++) {
+                const x = (i * 37) % this.canvas.width;
+                const y = (i * 73) % this.canvas.height;
+                this.ctx.fillRect(x, y, 1, 1);
+            }
+        }
+
+        drawPlayer() {
+            // Oyuncu gemisini çiz
+            this.ctx.fillStyle = this.player.color;
+            this.ctx.fillRect(this.player.x, this.player.y, this.player.width, this.player.height);
+
+            // Kokpiti çiz
+            this.ctx.fillStyle = this.theme === 'dark' ? '#ffffff' : '#000000';
+            this.ctx.fillRect(this.player.x + 15, this.player.y - 5, 10, 5);
+        }
+
+        /**
+         * Ses Sistemi
+         */
+        playSound(frequency, duration, type = 'sine') {
+            if (!this.soundEnabled) return;
+
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+
+                oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime);
+                oscillator.type = type;
+
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration);
+
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration);
+            } catch (error) {
+                console.warn('Ses desteklenmiyor:', error);
+            }
+        }
+
+        /**
+         * Veri Kalıcılığı
+         */
+        saveHighScore() {
+            try {
+                localStorage.setItem('kozmikSavuncuYuksekPuan', this.highScore.toString());
+            } catch (error) {
+                console.warn('Yüksek puan kaydedilemedi:', error);
+            }
+        }
+
+        loadHighScore() {
+            try {
+                const saved = localStorage.getItem('kozmikSavuncuYuksekPuan');
+                return saved ? parseInt(saved, 10) : 0;
+            } catch (error) {
+                console.warn('Yüksek puan yüklenemedi:', error);
+                return 0;
+            }
+        }
+
+        /**
+         * Temizlik
+         */
+        cancelAnimationFrame() {
+            if (this.animationId) {
+                cancelAnimationFrame(this.animationId);
+                this.animationId = null;
+            }
+        }
+
+        destroy() {
+            this.cancelAnimationFrame();
+            // Gerekirse olay dinleyicilerini kaldır
+            document.removeEventListener('keydown', this.handleKeyDown);
+            document.removeEventListener('keyup', this.handleKeyUp);
+        }
+    }
+
+    // DOM yüklendiğinde oyunu başlat
+    document.addEventListener('DOMContentLoaded', () => {
+        const game = new KozmikSavunucu();
+        
+        // Hata ayıklama için oyunu global olarak erişilebilir yap
+        window.kozmikSavunucu = game;
+        
+        // Sayfa görünürlük değişikliğini işle - oyunu duraklat
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && game.gameState === 'playing') {
+                game.togglePause();
+            }
+        });
+    });
+
+    // Sayfa kapanışını işle
+    window.addEventListener('beforeunload', () => {
+        if (window.kozmikSavunucu) {
+            window.kozmikSavunucu.destroy();
+        }
+    });
+</script>
+</body>
+</html>

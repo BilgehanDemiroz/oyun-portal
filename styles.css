@@ -1,0 +1,635 @@
+/* Temel Stiller ve Sıfırlama */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --secondary: #10b981;
+    --secondary-hover: #059669;
+    --accent: #f59e0b;
+    --accent-hover: #d97706;
+    --background: #f9fafb;
+    --foreground: #111827;
+    --card-bg: #ffffff;
+    --card-border: #e5e7eb;
+    --header-bg: rgba(255, 255, 255, 0.8);
+    --footer-bg: #f3f4f6;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    --radius: 0.5rem;
+    --transition: all 0.3s ease;
+}
+
+.dark-theme {
+    --primary: #6366f1;
+    --primary-hover: #4f46e5;
+    --secondary: #10b981;
+    --secondary-hover: #059669;
+    --accent: #f59e0b;
+    --accent-hover: #d97706;
+    --background: #111827;
+    --foreground: #f9fafb;
+    --card-bg: #1f2937;
+    --card-border: #374151;
+    --header-bg: rgba(31, 41, 55, 0.8);
+    --footer-bg: #1f2937;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background-color: var(--background);
+    color: var(--foreground);
+    line-height: 1.6;
+    min-height: 100vh;
+    transition: var(--transition);
+    overflow-x: hidden;
+}
+
+/* Arka Plan Animasyonu */
+.background-animation {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    pointer-events: none;
+}
+
+.stars, .stars2, .stars3 {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.stars {
+    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="0.5" fill="%23d1d5db"/><circle cx="80" cy="40" r="0.3" fill="%23d1d5db"/><circle cx="40" cy="70" r="0.4" fill="%23d1d5db"/><circle cx="90" cy="90" r="0.2" fill="%23d1d5db"/><circle cx="10" cy="50" r="0.3" fill="%23d1d5db"/></svg>') repeat;
+    animation: moveStars 50s linear infinite;
+}
+
+.stars2 {
+    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="30" cy="10" r="0.4" fill="%239ca3af"/><circle cx="70" cy="60" r="0.2" fill="%239ca3af"/><circle cx="50" cy="30" r="0.3" fill="%239ca3af"/><circle cx="15" cy="80" r="0.2" fill="%239ca3af"/></svg>') repeat;
+    animation: moveStars 100s linear infinite;
+}
+
+.stars3 {
+    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="60" cy="15" r="0.3" fill="%236b7280"/><circle cx="25" cy="45" r="0.2" fill="%236b7280"/><circle cx="85" cy="75" r="0.4" fill="%236b7280"/></svg>') repeat;
+    animation: moveStars 75s linear infinite;
+}
+
+@keyframes moveStars {
+    from { transform: translateY(0px); }
+    to { transform: translateY(-100vh); }
+}
+
+.dark-theme .stars {
+    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="0.5" fill="white"/><circle cx="80" cy="40" r="0.3" fill="white"/><circle cx="40" cy="70" r="0.4" fill="white"/><circle cx="90" cy="90" r="0.2" fill="white"/><circle cx="10" cy="50" r="0.3" fill="white"/></svg>') repeat;
+}
+
+.dark-theme .stars2 {
+    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="30" cy="10" r="0.4" fill="cyan"/><circle cx="70" cy="60" r="0.2" fill="cyan"/><circle cx="50" cy="30" r="0.3" fill="cyan"/><circle cx="15" cy="80" r="0.2" fill="cyan"/></svg>') repeat;
+}
+
+.dark-theme .stars3 {
+    background: transparent url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="60" cy="15" r="0.3" fill="yellow"/><circle cx="25" cy="45" r="0.2" fill="yellow"/><circle cx="85" cy="75" r="0.4" fill="yellow"/></svg>') repeat;
+}
+
+/* Ana Konteyner */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1rem;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Başlık */
+.main-header {
+    padding: 1.5rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    background-color: var(--header-bg);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--card-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo h1 {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(45deg, var(--primary), var(--accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.logo p {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+.main-nav {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.nav-btn {
+    background-color: transparent;
+    border: 1px solid var(--card-border);
+    color: var(--foreground);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.9rem;
+    transition: var(--transition);
+}
+
+.nav-btn:hover {
+    background-color: var(--card-border);
+}
+
+.nav-btn.active {
+    background-color: var(--primary);
+    color: white;
+    border-color: var(--primary);
+}
+
+/* Ana İçerik */
+.main-content {
+    flex: 1;
+    padding: 2rem 0;
+}
+
+.section-title {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.section-desc {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    opacity: 0.8;
+}
+
+/* Sayfa Yönetimi */
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+}
+
+/* Oyun Kartları Grid */
+.games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+}
+
+.game-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    overflow: hidden;
+    transition: var(--transition);
+    box-shadow: var(--shadow);
+}
+
+.game-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--shadow-lg);
+}
+
+.game-image {
+    height: 180px;
+    overflow: hidden;
+}
+
+.game-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: var(--transition);
+}
+
+.game-card:hover .game-image img {
+    transform: scale(1.05);
+}
+
+.game-info {
+    padding: 1.5rem;
+}
+
+.game-info h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    color: var(--primary);
+}
+
+.game-info p {
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+}
+
+.game-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.8rem;
+}
+
+.difficulty {
+    color: var(--accent);
+}
+
+.category {
+    background-color: var(--secondary);
+    color: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 1rem;
+}
+
+.play-btn {
+    background-color: var(--primary);
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius);
+    font-family: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: var(--transition);
+}
+
+.play-btn:hover {
+    background-color: var(--primary-hover);
+}
+
+/* Oyun Sayfası */
+.game-page {
+    min-height: 70vh;
+}
+
+.game-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.game-header h2 {
+    font-size: 1.8rem;
+    color: var(--primary);
+}
+
+.back-btn {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    color: var(--foreground);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.back-btn:hover {
+    background-color: var(--card-border);
+}
+
+.game-container {
+    background-color: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
+    min-height: 400px;
+}
+
+/* Kozmik Savunucu iframe */
+#cosmicDefenderFrame {
+    width: 100%;
+    height: 600px;
+    border: none;
+    border-radius: var(--radius);
+}
+
+/* Taş Kağıt Makas Oyunu */
+.rps-game {
+    max-width: 600px;
+    margin: 0 auto;
+    text-align: center;
+}
+
+.score-board {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 2rem;
+}
+
+.score {
+    padding: 1rem;
+    background-color: var(--background);
+    border-radius: var(--radius);
+    min-width: 120px;
+}
+
+.score p {
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.score h2 {
+    font-size: 2rem;
+    color: var(--primary);
+}
+
+.result {
+    margin-bottom: 2rem;
+    font-size: 1.5rem;
+    font-weight: 600;
+    min-height: 2em;
+}
+
+.choices {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.choice {
+    background-color: var(--background);
+    border-radius: 50%;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.choice:hover {
+    background-color: var(--card-border);
+    transform: scale(1.1);
+}
+
+.choice img {
+    width: 80px;
+    height: 80px;
+}
+
+.choice p {
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.action-message {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent);
+}
+
+/* Hafıza Oyunu */
+.memory-game-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.memory-stats {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.memory-stat {
+    background-color: var(--background);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+}
+
+.restart-btn {
+    background-color: var(--secondary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.restart-btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+.memory-game-board {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.memory-card {
+    aspect-ratio: 1;
+    background-color: var(--primary);
+    border-radius: var(--radius);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    transform-style: preserve-3d;
+    transition: transform 0.5s;
+}
+
+.memory-card.flipped {
+    transform: rotateY(180deg);
+}
+
+.memory-card.matched {
+    background-color: var(--secondary);
+    cursor: default;
+}
+
+.memory-card-front,
+.memory-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius);
+}
+
+.memory-card-front {
+    background-color: var(--primary);
+}
+
+.memory-card-back {
+    background-color: var(--card-bg);
+    transform: rotateY(180deg);
+}
+
+/* Yılan Oyunu */
+.snake-game-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.snake-stats {
+    display: flex;
+    gap: 1.5rem;
+}
+
+.snake-stat {
+    background-color: var(--background);
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    font-size: 0.9rem;
+}
+
+.start-btn {
+    background-color: var(--secondary);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-family: inherit;
+    transition: var(--transition);
+}
+
+.start-btn:hover {
+    background-color: var(--secondary-hover);
+}
+
+#snakeCanvas {
+    display: block;
+    margin: 0 auto;
+    background-color: var(--background);
+    border: 1px solid var(--card-border);
+    border-radius: var(--radius);
+    max-width: 100%;
+}
+
+.snake-instructions {
+    text-align: center;
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Alt Bilgi */
+.main-footer {
+    padding: 1.5rem 0;
+    text-align: center;
+    background-color: var(--footer-bg);
+    border-top: 1px solid var(--card-border);
+    font-size: 0.9rem;
+    opacity: 0.8;
+    margin-top: auto;
+}
+
+.main-footer p {
+    margin: 0.2rem 0;
+}
+
+/* Duyarlı Tasarım */
+@media (max-width: 768px) {
+    .main-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .games-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .choices {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .memory-game-board {
+        grid-template-columns: repeat(3, 1fr);
+    }
+    
+    .memory-game-controls,
+    .snake-game-controls {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .section-title {
+        font-size: 1.5rem;
+    }
+    
+    .memory-game-board {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .memory-stats,
+    .snake-stats {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+}
+
+/* Erişilebilirlik */
+@media (prefers-reduced-motion: reduce) {
+    .stars, .stars2, .stars3 {
+        animation: none;
+    }
+    
+    .game-card:hover {
+        transform: none;
+    }
+    
+    .game-card:hover .game-image img {
+        transform: none;
+    }
+    
+    .choice:hover {
+        transform: none;
+    }
+    
+    .memory-card {
+        transition: none;
+    }
+}
+
+/* Odak Stilleri */
+button:focus-visible,
+.choice:focus-visible,
+.memory-card:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
